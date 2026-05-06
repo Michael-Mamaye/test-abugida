@@ -303,8 +303,13 @@ byId("btn-signin").onclick = async () => {
 };
 
 byId("btn-google").onclick = async () => {
-  const callbackURL = googleCbEl.value.trim() || defaultGoogleCallback;
-  localStorage.setItem(GOOGLE_CB_KEY, callbackURL);
+  const finalURL = googleCbEl.value.trim() || defaultGoogleCallback;
+  localStorage.setItem(GOOGLE_CB_KEY, finalURL);
+  // Route through the API's handoff bridge so the bearer token surfaces in
+  // the URL fragment when we land back here. This avoids relying on the
+  // session cookie (which browsers often drop cross-site).
+  const callbackURL =
+    `${apiBase}/api/v1/auth/handoff?to=${encodeURIComponent(finalURL)}`;
   const result = await api("/api/v1/auth/sign-in/social", {
     method: "POST",
     body: JSON.stringify({ provider: "google", callbackURL }),
@@ -384,18 +389,36 @@ byId("btn-checkout").onclick = async () => {
   }
 };
 
-const query = new URLSearchParams(window.location.search);
-if (query.get("google") === "success") {
-  out.textContent = "Returned from Google sign-in. Trying to read the current session...";
-  api("/api/v1/auth/get-session").then((result) => show(out, "GET /get-session (auto) ->", result));
-} else if (query.get("stripe")) {
-  out.textContent = `Returned from Stripe: ${query.get("stripe")}${
-    query.get("session_id") ? ` (session_id=${query.get("session_id")})` : ""
-  }`;
-} else if (query.get("error")) {
-  out.textContent = `Auth error: ${query.get("error")}${
-    query.get("error_description") ? ` - ${query.get("error_description")}` : ""
-  }`;
+// First check the URL fragment for a token delivered by the API's
+// /auth/handoff bridge after Google sign-in. Fragments aren't sent to
+// servers, so this is the safe channel for cross-site clients.
+const hash = new URLSearchParams((window.location.hash || "").replace(/^#/, ""));
+const handoffToken = hash.get("token");
+const handoffError = hash.get("error");
+if (handoffToken) {
+  setToken(handoffToken);
+  // Strip the fragment so a refresh doesn't re-process a stale token.
+  history.replaceState(null, "", window.location.pathname + window.location.search);
+  out.textContent = `Returned from Google sign-in. Bearer token captured (${handoffToken.slice(0, 8)}…). Calling /get-session to verify…`;
+  api("/api/v1/auth/get-session").then((r) => show(out, "GET /get-session ->", r));
+} else if (handoffError) {
+  out.textContent = `Sign-in handoff error: ${handoffError}`;
+  history.replaceState(null, "", window.location.pathname + window.location.search);
+} else {
+  const query = new URLSearchParams(window.location.search);
+  if (query.get("google") === "success") {
+    out.textContent =
+      "Returned from Google sign-in (no token in fragment — handoff may not be wired). Trying /get-session via cookies…";
+    api("/api/v1/auth/get-session").then((r) => show(out, "GET /get-session (auto) ->", r));
+  } else if (query.get("stripe")) {
+    out.textContent = `Returned from Stripe: ${query.get("stripe")}${
+      query.get("session_id") ? ` (session_id=${query.get("session_id")})` : ""
+    }`;
+  } else if (query.get("error")) {
+    out.textContent = `Auth error: ${query.get("error")}${
+      query.get("error_description") ? ` - ${query.get("error_description")}` : ""
+    }`;
+  }
 }
 
 getToken();
