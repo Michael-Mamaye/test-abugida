@@ -303,13 +303,11 @@ byId("btn-signin").onclick = async () => {
 };
 
 byId("btn-google").onclick = async () => {
-  const finalURL = googleCbEl.value.trim() || defaultGoogleCallback;
-  localStorage.setItem(GOOGLE_CB_KEY, finalURL);
-  // Route through the API's handoff bridge so the bearer token surfaces in
-  // the URL fragment when we land back here. This avoids relying on the
-  // session cookie (which browsers often drop cross-site).
-  const callbackURL =
-    `${apiBase}/api/v1/auth/handoff?to=${encodeURIComponent(finalURL)}`;
+  // The API auto-wraps cross-site callbackURLs through its /handoff bridge,
+  // so we can just pass the page we want to land on. The bearer token will
+  // arrive in the URL fragment.
+  const callbackURL = googleCbEl.value.trim() || defaultGoogleCallback;
+  localStorage.setItem(GOOGLE_CB_KEY, callbackURL);
   const result = await api("/api/v1/auth/sign-in/social", {
     method: "POST",
     body: JSON.stringify({ provider: "google", callbackURL }),
