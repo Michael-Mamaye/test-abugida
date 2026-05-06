@@ -22,8 +22,15 @@ npm run preview
 ## Configure API base
 
 ```sh
-VITE_API_BASE=http://localhost:3000 npm run dev
+cp .env.example .env
+# then edit .env values if needed
+npm run dev
 ```
+
+Environment variables:
+
+- `VITE_API_BASE` - API base URL (example: `http://localhost:3000`)
+- `VITE_GOOGLE_CALLBACK_URL` - default Google OAuth callback URL
 
 ## Exercises
 

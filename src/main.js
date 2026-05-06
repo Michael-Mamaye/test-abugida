@@ -2,6 +2,8 @@ import "./style.css";
 
 const apiBase = import.meta.env.VITE_API_BASE ?? "https://api.abugida.et";
 const origin = window.location.origin;
+const defaultGoogleCallback =
+  import.meta.env.VITE_GOOGLE_CALLBACK_URL ?? `${origin}/?google=success`;
 
 const successUrl = `${origin}/?stripe=success`;
 const cancelUrl = `${origin}/?stripe=cancel`;
@@ -112,14 +114,13 @@ byId("cancelUrl").textContent = cancelUrl;
 // separate custom auth and has nothing to do with Better-Auth).
 const GOOGLE_CB_KEY = "abugida.googleCallback";
 const googleCbEl = byId("google-cb");
-googleCbEl.value =
-  localStorage.getItem(GOOGLE_CB_KEY) || `${origin}/?google=success`;
+googleCbEl.value = localStorage.getItem(GOOGLE_CB_KEY) || defaultGoogleCallback;
 googleCbEl.addEventListener("change", () =>
   localStorage.setItem(GOOGLE_CB_KEY, googleCbEl.value.trim()),
 );
 // One-time reset for users whose localStorage still has the old admin URL.
 if (googleCbEl.value.includes("admin.abugida.et")) {
-  googleCbEl.value = `${origin}/?google=success`;
+  googleCbEl.value = defaultGoogleCallback;
   localStorage.setItem(GOOGLE_CB_KEY, googleCbEl.value);
 }
 
@@ -302,8 +303,7 @@ byId("btn-signin").onclick = async () => {
 };
 
 byId("btn-google").onclick = async () => {
-  const callbackURL =
-    googleCbEl.value.trim() || "https://admin.abugida.et/auth/google-callback";
+  const callbackURL = googleCbEl.value.trim() || defaultGoogleCallback;
   localStorage.setItem(GOOGLE_CB_KEY, callbackURL);
   const result = await api("/api/v1/auth/sign-in/social", {
     method: "POST",
