@@ -4,6 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Abugida Test App</title>
+    <!--
+      Google Identity Services — loads the JS lib needed for the in-page
+      ID-token sign-in flow (section 2). Exposes itself on
+      window.google.accounts.id once ready; src/lib/google.js waits for it.
+    -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
   </head>
   <body>
     <div id="app"></div>
