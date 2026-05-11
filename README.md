@@ -10,10 +10,10 @@ cd abugida-test-app
 yarn install   # or npm install
 cp .env.example .env
 # fill in VITE_GOOGLE_CLIENT_ID (see below)
-yarn dev       # http://localhost:3001
+yarn dev       # http://localhost:3000
 ```
 
-`vite.config.js` pins port 3001 because the API's CORS already accepts
+`vite.config.js` pins port 3000 because the API's CORS already accepts
 loopback and the prod `TRUSTED_ORIGINS` lists that origin.
 
 ```sh
@@ -68,7 +68,7 @@ The backend at [abugida.backend](../abugida.backend) needs:
 
 1. `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` set to the same Web OAuth
    client whose ID you put in `VITE_GOOGLE_CLIENT_ID` here.
-2. `TRUSTED_ORIGINS` must include `http://localhost:3001` for production
+2. `TRUSTED_ORIGINS` must include `http://localhost:3000` for production
    origins (loopback already matches by wildcard, so this is automatic in
    dev — only relevant if you change the port).
 
